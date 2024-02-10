@@ -1,0 +1,184 @@
+CREATE TABLE country (
+    id           INTEGER NOT NULL,
+    country_name VARCHAR2(35) NOT NULL
+);
+
+ALTER TABLE country ADD CONSTRAINT country_pk PRIMARY KEY ( id );
+
+CREATE TABLE ingredient (
+    id              INTEGER NOT NULL,
+    ingredient_name VARCHAR2(30) NOT NULL,
+    unit_of_measure VARCHAR2(20) NOT NULL
+);
+
+ALTER TABLE ingredient ADD CONSTRAINT ingredient_pk PRIMARY KEY ( id );
+
+CREATE TABLE recipe (
+    id          INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    recipe_name VARCHAR2(30) NOT NULL,
+    country_id  INTEGER NOT NULL,
+    cook_time   INTEGER,
+    category    VARCHAR2(20) NOT NULL,
+    instruction CLOB NOT NULL,
+    image       BLOB,
+    calories    REAL NOT NULL,
+    protein     REAL NOT NULL,
+    fats        REAL NOT NULL,
+    fibers      REAL,
+    carbs       REAL NOT NULL,
+    country_id2 INTEGER,
+    user_id2    INTEGER
+);
+
+ALTER TABLE recipe ADD CONSTRAINT recipe_pk PRIMARY KEY ( id );
+
+CREATE TABLE recipe_ingredient (
+    iid           INTEGER NOT NULL,
+    recipe_id     INTEGER NOT NULL,
+    ingredient_id INTEGER NOT NULL,
+    quantity      REAL NOT NULL
+);
+
+ALTER TABLE recipe_ingredient ADD CONSTRAINT recipe_ingredient_pk PRIMARY KEY ( iid );
+
+ALTER TABLE recipe_ingredient ADD CONSTRAINT recipe_ingredient__un UNIQUE ( recipe_id,
+                                                                            ingredient_id );
+
+CREATE TABLE recipe_rates (
+    review_id INTEGER NOT NULL,
+    user_id   INTEGER NOT NULL,
+    recipe_id INTEGER NOT NULL,
+    rating    INTEGER NOT NULL,
+    review    CLOB,
+    "date"    DATE NOT NULL
+);
+
+ALTER TABLE recipe_rates ADD CONSTRAINT recipe_rates_pk PRIMARY KEY ( review_id );
+
+CREATE TABLE "User" (
+    id           INTEGER NOT NULL,
+    email        VARCHAR2(50) NOT NULL,
+    username     VARCHAR2(25) NOT NULL,
+    password     VARCHAR2(32) NOT NULL,
+    user_type    INTEGER NOT NULL,
+    phone_number VARCHAR2(15) NOT NULL,
+    name         VARCHAR2(25) NOT NULL
+);
+
+ALTER TABLE "User" ADD CONSTRAINT user_pk PRIMARY KEY ( id );
+
+CREATE TABLE user_fav_recipe (
+    user_id   INTEGER NOT NULL,
+    recipe_id INTEGER NOT NULL,
+    fav_id    INTEGER NOT NULL
+);
+
+ALTER TABLE user_fav_recipe ADD CONSTRAINT user_fav_recipe_pk PRIMARY KEY ( fav_id );
+
+ALTER TABLE user_fav_recipe ADD CONSTRAINT user_fav_recipe__un UNIQUE ( user_id,
+                                                                        recipe_id );
+
+ALTER TABLE recipe
+    ADD CONSTRAINT recipe_country_fk FOREIGN KEY ( country_id2 )
+        REFERENCES country ( id );
+
+ALTER TABLE recipe_ingredient
+    ADD CONSTRAINT recipe_ingred_ingred_fk FOREIGN KEY ( ingredient_id )
+        REFERENCES ingredient ( id );
+
+ALTER TABLE recipe_ingredient
+    ADD CONSTRAINT recipe_ingred_recipe_fk FOREIGN KEY ( recipe_id )
+        REFERENCES recipe ( id );
+
+ALTER TABLE recipe_rates
+    ADD CONSTRAINT recipe_rates_recipe_fk FOREIGN KEY ( recipe_id )
+        REFERENCES recipe ( id );
+
+ALTER TABLE recipe_rates
+    ADD CONSTRAINT recipe_rates_user_fk FOREIGN KEY ( user_id )
+        REFERENCES "User" ( id );
+
+ALTER TABLE recipe
+    ADD CONSTRAINT recipe_user_fk FOREIGN KEY ( user_id2 )
+        REFERENCES "User" ( id )
+            ON DELETE CASCADE;
+
+ALTER TABLE user_fav_recipe
+    ADD CONSTRAINT user_fav_recipe_recipe_fk FOREIGN KEY ( recipe_id )
+        REFERENCES recipe ( id );
+
+ALTER TABLE user_fav_recipe
+    ADD CONSTRAINT user_fav_recipe_user_fk FOREIGN KEY ( user_id )
+        REFERENCES "User" ( id );
+
+--Alter table "User" rename userlogin;
+
+CREATE TABLE Persons (
+    Personid int NOT NULL,
+    LastName varchar(255) NOT NULL,
+    FirstName varchar(255),
+    Age int,
+    PRIMARY KEY (Personid)
+);
+
+-- Triggers for Persons , User, Recipe_ingredient Tables
+-- The triggers are for when we want to add an instance an auto generated id will be given to the tuples inserted
+-- First tuple inserted will have the id = 1, second id = 2, third id = 3... and so on
+CREATE SEQUENCE User_S
+START WITH 1
+INCREMENT BY 1
+CACHE 10;
+
+
+CREATE SEQUENCE Persons_S
+START WITH 1
+INCREMENT BY 1
+CACHE 10;
+
+CREATE OR REPLACE TRIGGER T_Persons_ID
+BEFORE INSERT
+ON Persons
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+  if(:new.Personid is null) then
+  SELECT Persons_S.nextval
+  INTO :new.Personid
+  FROM dual;
+  end if;
+END;
+
+CREATE OR REPLACE TRIGGER T_Users_ID
+BEFORE INSERT
+ON "User"
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+  if(:new.ID is null) then
+  SELECT USER_S.nextval
+  INTO :new.ID
+  FROM dual;
+  end if;
+END;
+
+
+CREATE OR REPLACE TRIGGER T_RECIPE_INGREDIENT
+BEFORE INSERT
+ON RECIPE_INGREDIENT
+REFERENCING NEW AS NEW
+FOR EACH ROW
+BEGIN
+  IF (:new.ID is null) THEN
+  SELECT USER_S.nextval
+  INTO :new.ID
+  FROM DUAL;
+  END IF;
+END;
+
+
+ALTER TRIGGER "T_USERS_ID" ENABLE;
+ALTER TRIGGER "T_RECIPE_INGREDIENT" ENABLE;
+ALTER TRIGGER "T_PERSONS_ID" ENABLE;
+
+commit;
