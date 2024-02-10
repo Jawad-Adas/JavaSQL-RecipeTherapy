@@ -24,7 +24,7 @@ import javax.swing.JOptionPane;
 public class myDBCon {
     String DBURL = "jdbc:oracle:thin:@coeoracle.aus.edu:1521:orcl";
     String DBUSER = "b00089059";
-    String DBPASS = "b00089059";
+    String DBPASS = "";
     
     boolean validLogin = false;
 
